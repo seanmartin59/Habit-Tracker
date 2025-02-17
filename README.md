@@ -1,50 +1,55 @@
-# Welcome to your Expo app 👋
+# Sean's Habit Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Scope
 
-## Get started
+### MVP (First Iteration)
+- Basic user authentication and profile setup
+- Be able to add a daily habit I want to track with:
+  - Name
+  - Description (optional)
+  - Target frequency (daily, specific days of week)
+  - Preferred time of day (morning, afternoon, evening)
+- Be able to mark a habit as complete/incomplete for a day
+- Basic habit history view
+- Simple streak counting for individual habits
+- Designate habits as "non-negotiable"
+- Basic daily progress overview
 
-1. Install dependencies
+### Future Iterations
+- Allow for notification reminders of habits
+- Create a streak that tallies every consecutive day that all non-negotiables are completed
+- Create a mobile widget displaying non-negotiable habits
+- More advanced habit configurations:
+  - Multiple times per day
+  - Quantity-based habits (e.g., drink 8 glasses of water)
+  - Time-based habits (e.g., meditate for 10 minutes)
+- Habit categories/tags
+- Progress analytics and insights
+- Export/backup functionality
+- Offline support
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+### Frontend
+- React Native
+- Expo
+- TypeScript
+- React Native Paper (UI components)
 
-   ```bash
-    npx expo start
-   ```
+### Backend & Services
+- Firebase
+  - Authentication
+  - Firestore (database)
+  - Cloud Functions
+  - Cloud Messaging (notifications)
+- Expo EAS (build service)
 
-In the output, you'll find options to open the app in a
+### Development Tools
+- VS Code
+- Git
+- npm/yarn
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Testing & Deployment
+- Jest
+- TestFlight
+- App Store Connect
