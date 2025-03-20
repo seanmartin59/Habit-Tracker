@@ -78,146 +78,100 @@ export const getHabit = async (id: string): Promise<Habit | null> => {
 
 // Habit Log operations
 export const logHabit = async (habitId: string, completed: boolean, notes?: string): Promise<string> => {
-  console.log(`Attempting to log habit: ${habitId}, completed: ${completed}`);
-  console.log(`Using collections: ${HABITS_COLLECTION} and ${HABIT_LOGS_COLLECTION}`);
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
   try {
-    // Try with compound query first (requires index)
-    console.log('Using compound query to find existing log');
+    console.log(`[HABIT LOG] Starting logHabit function for habit: ${habitId}, completed: ${completed}`);
+    
+    // Get today's date with time set to midnight
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    console.log(`[HABIT LOG] Today's date: ${today.toISOString()}`);
+    
+    // Check if there's already a log for this habit today
+    console.log(`[HABIT LOG] Checking for existing log for habit ${habitId} on ${today.toISOString()}`);
+    
+    // IMPORTANT: Use Timestamp for consistency in both query and document creation
+    const todayTimestamp = Timestamp.fromDate(today);
+    
+    console.log(`[HABIT LOG] Created Timestamp: ${todayTimestamp}`);
+    
     const q = query(
       collection(db, HABIT_LOGS_COLLECTION),
       where('habitId', '==', habitId),
-      where('date', '==', Timestamp.fromDate(today))
+      where('date', '==', todayTimestamp)
     );
     
-    try {
-      console.log('Executing query...');
-      const querySnapshot = await getDocs(q);
-      console.log(`Found ${querySnapshot.docs.length} existing logs for today`);
-      
-      if (!querySnapshot.empty) {
-        // Update existing log
-        const logDoc = querySnapshot.docs[0];
-        console.log(`Updating existing log: ${logDoc.id}`);
-        try {
-          console.log(`Updating with data: completed=${completed}`);
-          await updateDoc(doc(db, HABIT_LOGS_COLLECTION, logDoc.id), {
-            completed,
-            notes,
-            updatedAt: serverTimestamp()
-          });
-          console.log('Log updated successfully');
-          return logDoc.id;
-        } catch (updateError) {
-          console.error('Error updating log:', updateError);
-          throw updateError;
-        }
-      } else {
-        // Create new log
-        console.log('Creating new log');
-        try {
-          const newLog = {
-            habitId,
-            date: Timestamp.fromDate(today),
-            completed,
-            notes,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          console.log('New log data:', JSON.stringify(newLog));
-          
-          console.log(`Adding document to collection: ${HABIT_LOGS_COLLECTION}`);
-          const docRef = await addDoc(collection(db, HABIT_LOGS_COLLECTION), newLog);
-          console.log(`New log created with ID: ${docRef.id}`);
-          return docRef.id;
-        } catch (addError) {
-          console.error('Error creating log:', addError);
-          console.error('Error details:', JSON.stringify(addError));
-          throw addError;
-        }
-      }
-    } catch (queryError) {
-      console.error('Error querying logs:', queryError);
-      console.error('Error details:', JSON.stringify(queryError));
-      throw queryError;
-    }
-  } catch (error) {
-    console.warn('Index not yet available or other error, falling back to simple query:', error);
-    console.error('Error details:', JSON.stringify(error));
-    checkAndShowIndexWarning(error);
+    console.log('[HABIT LOG] Executing query to find existing log');
+    const querySnapshot = await getDocs(q);
+    console.log(`[HABIT LOG] Query returned ${querySnapshot.size} results`);
     
-    // Fallback to a simple query without the date filter
-    console.log('Using simple query as fallback');
-    try {
-      const simpleQuery = query(
-        collection(db, HABIT_LOGS_COLLECTION),
-        where('habitId', '==', habitId)
-      );
-      
-      const querySnapshot = await getDocs(simpleQuery);
-      console.log(`Found ${querySnapshot.docs.length} logs for this habit`);
-      
-      // Find today's log manually
-      const todayTimestamp = Timestamp.fromDate(today);
-      const todayLog = querySnapshot.docs.find(doc => {
-        const data = doc.data();
-        const logDate = data.date;
-        return logDate && logDate.seconds === todayTimestamp.seconds;
-      });
-      
-      if (todayLog) {
-        // Update existing log
-        console.log(`Updating existing log (fallback): ${todayLog.id}`);
-        try {
-          await updateDoc(doc(db, HABIT_LOGS_COLLECTION, todayLog.id), {
-            completed,
-            notes,
-            updatedAt: serverTimestamp()
-          });
-          console.log('Log updated successfully (fallback)');
-          return todayLog.id;
-        } catch (updateError) {
-          console.error('Error updating log (fallback):', updateError);
-          console.error('Error details:', JSON.stringify(updateError));
-          throw updateError;
+    if (!querySnapshot.empty) {
+      // Update existing log
+      const logDoc = querySnapshot.docs[0];
+      console.log(`[HABIT LOG] Updating existing log: ${logDoc.id}`);
+      try {
+        console.log(`[HABIT LOG] Updating with data: completed=${completed}`);
+        // Create update object without undefined values
+        const updateData: any = {
+          completed,
+          updatedAt: serverTimestamp()
+        };
+        
+        // Only add notes if it's not undefined
+        if (notes !== undefined) {
+          updateData.notes = notes;
         }
-      } else {
-        // Create new log
-        console.log('Creating new log (fallback)');
-        try {
-          const newLog = {
-            habitId,
-            date: Timestamp.fromDate(today),
-            completed,
-            notes,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          console.log('New log data (fallback):', JSON.stringify(newLog));
-          
-          console.log(`Adding document to collection: ${HABIT_LOGS_COLLECTION}`);
-          const docRef = await addDoc(collection(db, HABIT_LOGS_COLLECTION), newLog);
-          console.log(`New log created with ID (fallback): ${docRef.id}`);
-          return docRef.id;
-        } catch (addError) {
-          console.error('Error creating log (fallback):', addError);
-          console.error('Error details:', JSON.stringify(addError));
-          throw addError;
-        }
+        
+        await updateDoc(doc(db, HABIT_LOGS_COLLECTION, logDoc.id), updateData);
+        console.log('[HABIT LOG] Log updated successfully');
+        return logDoc.id;
+      } catch (updateError) {
+        console.error('[HABIT LOG] Error updating log:', updateError);
+        throw updateError;
       }
-    } catch (fallbackError) {
-      console.error('Error in fallback logic:', fallbackError);
-      console.error('Error details:', JSON.stringify(fallbackError));
-      throw fallbackError;
+    } else {
+      // Create new log
+      console.log('[HABIT LOG] No existing log found. Creating new log');
+      try {
+        // Create new log object without undefined values
+        const newLog: any = {
+          habitId,
+          date: todayTimestamp,
+          completed,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        
+        // Only add notes if it's not undefined
+        if (notes !== undefined) {
+          newLog.notes = notes;
+        }
+        
+        console.log('[HABIT LOG] New log data:', JSON.stringify(newLog, (key, value) => 
+          value instanceof Timestamp ? `Timestamp(seconds=${value.seconds}, nanoseconds=${value.nanoseconds})` : value
+        ));
+        
+        console.log(`[HABIT LOG] Adding document to collection: ${HABIT_LOGS_COLLECTION}`);
+        const docRef = await addDoc(collection(db, HABIT_LOGS_COLLECTION), newLog);
+        console.log(`[HABIT LOG] New log created with ID: ${docRef.id}`);
+        return docRef.id;
+      } catch (addError) {
+        console.error('[HABIT LOG] Error creating log:', addError);
+        console.error('[HABIT LOG] Error details:', JSON.stringify(addError));
+        throw addError;
+      }
     }
+  } catch (queryError) {
+    console.error('[HABIT LOG] Error in logHabit function:', queryError);
+    console.error('[HABIT LOG] Error details:', JSON.stringify(queryError));
+    throw queryError;
   }
 };
 
 export const getHabitLogs = async (habitId: string): Promise<HabitLog[]> => {
   try {
+    console.log(`[HABIT LOG] Getting logs for habit: ${habitId}`);
+    
     // Try with the compound query first (requires index)
     const q = query(
       collection(db, HABIT_LOGS_COLLECTION),
@@ -225,10 +179,13 @@ export const getHabitLogs = async (habitId: string): Promise<HabitLog[]> => {
       orderBy('date', 'desc')
     );
     
+    console.log('[HABIT LOG] Executing query to get habit logs');
     const querySnapshot = await getDocs(q);
+    console.log(`[HABIT LOG] Query returned ${querySnapshot.size} logs`);
     
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
+      console.log(`[HABIT LOG] Processing log: ${doc.id}, date: ${data.date}`);
       return {
         id: doc.id,
         habitId: data.habitId,
@@ -238,7 +195,7 @@ export const getHabitLogs = async (habitId: string): Promise<HabitLog[]> => {
       };
     });
   } catch (error) {
-    console.warn('Index not yet available, falling back to simple query:', error);
+    console.warn('[HABIT LOG] Index not yet available, falling back to simple query:', error);
     checkAndShowIndexWarning(error);
     
     // Fallback to a simple query without ordering (doesn't require index)

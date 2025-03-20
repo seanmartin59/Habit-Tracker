@@ -27,17 +27,21 @@ export default function HabitItem({ habit, onUpdate }: HabitItemProps) {
       const newCompletedState = !localCompletedState;
       setLocalCompletedState(newCompletedState);
       
-      console.log(`Toggling habit: ${habit.id}, current status: ${localCompletedState}, new status: ${newCompletedState}`);
+      console.log(`[HABIT TOGGLE] Toggling habit: ${habit.id}, current status: ${localCompletedState}, new status: ${newCompletedState}`);
       
       // Test Firebase connection first
+      console.log('[HABIT TOGGLE] Testing Firebase connection...');
       const connectionTest = await testFirebaseConnection();
       if (!connectionTest) {
+        console.error('[HABIT TOGGLE] Firebase connection test failed');
         throw new Error('Firebase connection test failed');
       }
+      console.log('[HABIT TOGGLE] Firebase connection test passed');
       
       // Now try to log the habit
+      console.log(`[HABIT TOGGLE] Calling logHabit for habit: ${habit.id}, completed: ${newCompletedState}`);
       const logId = await logHabit(habit.id, newCompletedState);
-      console.log(`Toggle completed, log ID: ${logId}, calling onUpdate`);
+      console.log(`[HABIT TOGGLE] Toggle completed, log ID: ${logId}, calling onUpdate`);
       
       // Add a small delay to ensure the database has time to update
       setTimeout(() => {
@@ -45,7 +49,7 @@ export default function HabitItem({ habit, onUpdate }: HabitItemProps) {
         setIsToggling(false);
       }, 1000); // Increased delay to 1 second
     } catch (error) {
-      console.error('Error toggling habit:', error);
+      console.error('[HABIT TOGGLE] Error toggling habit:', error);
       // Revert local state if there was an error
       setLocalCompletedState(habit.completedToday);
       setIsToggling(false);
